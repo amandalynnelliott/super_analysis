@@ -1,0 +1,2 @@
+figure; plot(grid.t, abs(Efinal.data(1,:))); hold on; xline(-4.4842e-13,"--"); plot(grid.t, abs(Einit.data(1,:))); xline(-750e-15, ":");
+xlabel("t [s]"); ylabel("absolute value"); title("Electric Field, $r=0$"); legend("Final", "$\tau_{cent}$ slipped", "Initial", "$\tau_{cent}$ initial");

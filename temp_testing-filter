@@ -1,0 +1,104 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Test filtering - isolate 800nm pulse
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Efinal -> ffEfinal_spectral = fft(Efinal.data);
+
+Efinal_spectral = fftshift(ifft(Efinal.data,[],2),2);
+% Plot to make sure that first and second harmonics are there.
+figure; imagesc(grid.omg, grid.r,abs(Efinal_spectral)); axis xy; 
+xlabel("$\omega$ [rad/s]"); ylabel("r [m]"); 
+title("Final E Field - Spectral - Before Filter");
+
+% Filter out non-THz frequencies.
+% pulse{1}.omg0 = 2.3545e15 rad/s
+% freq_max = 2.2e15; 
+% freq_min = 3.0e15;
+freq_max = 4.0e15; 
+freq_min = 0;
+
+% Hard array, only 0's and 1's
+full_filter = (grid.omg >= freq_min) & (grid.omg <= freq_max);
+% filter_ind = (grid.THz >= freq_min) & (grid.THz <= freq_max);
+% first_ind = find(filter_ind,1);
+% last_ind = find(filter_ind, 1, 'last');
+% Nt_filt = last_ind - first_ind;
+% 
+% [freq, filter] = gaussian_filter([freq_min,freq_max], 50, 35,Nt_filt);
+% figure; plot(freq,filter); xlabel('Freq (THz)'); ylabel('Filter Amplitude')
+% 
+% temp_first = zeros(1, first_ind);
+% temp_last = zeros(1, length(grid.THz) - last_ind);
+% full_filter = [temp_first, filter, temp_last];
+% disp(length(full_filter));
+% disp(length(grid.THz));
+
+Efinal_spectral_THz = Efinal_spectral.* full_filter;
+
+% Plot after filtering
+figure; imagesc(grid.omg,grid.r,abs(Efinal_spectral_THz)); axis xy;
+xlabel("$\omega$ [rad/s]"); ylabel("r [m]"); 
+title("Final E Field - Spectral - After Filter");
+
+Efinal_THz_t = fft(Efinal_spectral_THz,[],2);
+
+figure; imagesc(grid.t, grid.r, abs(Efinal_THz_t)); 
+axis xy; 
+colorbar; colormap(parula);
+a = colorbar;
+a.Label.String = "Filtered Field";
+xlabel("t [s]"); ylabel("r [m]"); title("Final Field")
+filename = plots_folder + sim_title + "_Efinal_THz.jpg";
+saveas(gcf,filename);
+clearvars filename;
+
+% Calculate and plot the THz E-field in time at various positions in z.
+if plot_THz_full
+    
+    mkdir(plots_folder + "filter/")
+    clearvars size_EF iz;
+
+    figure;
+    size_EF = size(EF.data);
+    
+    for iz = 1:size_EF(3) - 1
+        temp_time = EF.data(:,:,iz);
+        temp_freq = fftshift(ifft(temp_time,[],2),2);
+ 
+        temp_freq_filtered = temp_freq.* full_filter;
+        temp_time_filtered = fft(temp_freq_filtered,[],2);
+        
+        imagesc(grid.t, grid.r, abs(temp_time_filtered)); 
+        axis xy; 
+        colorbar; colormap(parula);
+%         set(gca, 'ColorScale', 'log');
+        a = colorbar;
+        a.Label.String = "Filtered Field";
+        xlabel("t [s]"); ylabel("r [m]"); 
+        title("z = " + num2str(EF.axes(3).data(iz) + EF.axes(3).units))
+        filename = plots_folder + "filter/" + sim_title + "_" + ...
+            num2str(iz) + "_filter.jpg";
+        saveas(gcf,filename);
+        clearvars filename;
+    end
+end
+
+function [freq, filter] = gaussian_filter(f_range, f_center, bandwidth, n_points)
+    
+    % Validate inputs
+    if numel(f_range) ~= 2 || f_range(1) >= f_range(2)
+        error('f_range must be a 2-element vector with f_min < f_max.');
+    end
+
+    if f_center < f_range(1) || f_center > f_range(2)
+        error('f_center must lie within f_range.');
+    end
+
+    f_min = f_range(1);
+    f_max = f_range(2);
+    freq = linspace(f_min, f_max, n_points);
+
+    power = 10;
+
+    filter = exp(-((freq - f_center).^power / (2 * bandwidth^power)));
+end
