@@ -10,7 +10,7 @@ function [full_filter] = Calc_THz_filter(filter_gaussian, filter_half, freq_min,
             last_ind = find(filter_ind, 1, 'last');
             Nt_filt = last_ind - first_ind;
             
-            [freq, filter] = gaussian_filter([freq_min,freq_max], (freq_min + freq_max)/2, 35,Nt_filt);
+            [freq, filter] = gaussian_filter([freq_min,freq_max], (freq_min + freq_max)/2,20,Nt_filt);
             figure; plot(freq,filter); xlabel('Freq (THz)'); ylabel('Filter Amplitude')
             
             temp_first = zeros(1, first_ind);

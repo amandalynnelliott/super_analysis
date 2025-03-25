@@ -7,7 +7,7 @@
 % ---- U(zmin), U.data(0)
 Uinit = U.data(1);
 grid.THz = grid.omg / (2 * pi * 1e12);
-U_THz_max = 30; % Maximum THz frequency to integrate to.
+U_THz_max = ; % Maximum THz frequency to integrate to.
 
 init_spectrum = shifted_Spectrum(1,:);
 init_spectral_energy = trapz(init_spectrum,2) * grid.domg;
@@ -46,11 +46,11 @@ const.R2S = length(grid.t) * grid.dt;
 const.S2R = grid.domg ./ (2*pi);
 
 % Filter out non-THz frequencies.
-freq_max = 30; 
+freq_max = 150; 
 freq_min = 0;
 % freq_min = grid.domg / THz; % Make min freq one grid.omg from zero.
 
-filter_gaussian = '1'; % 1: Hard, 2: Gaussian
+filter_gaussian = '2'; % 1: Hard, 2: Gaussian
 filter_half = true;    % Half only cuts off at zero. False is true Gaussian.
 
 full_filter = Calc_THz_filter(filter_gaussian, filter_half, freq_min, freq_max, grid.THz);

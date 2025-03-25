@@ -6,11 +6,11 @@ plots_folder = data_folder + "plots/";
 mkdir(plots_folder)
 
 % To Plot?
-plot_arr.Efield_full =          true;    % Plot E(z) at each z location.
-plot_arr.neF_full =             true;   % Plot electron density at each z location.
-plot_arr.THz =                  false;    % Run THz post-processing diagnostic. 
-plot_arr.THz_full =             false;    % Plot THz filtered E(z) at each z location
-plot_arr.fluence =              true;   % Calculate and plot fluence;
+plot_arr.Efield_full =          false;    % Plot E(z) at each z location.
+plot_arr.neF_full =             false;   % Plot electron density at each z location.
+plot_arr.THz =                  true;    % Run THz post-processing diagnostic. 
+plot_arr.THz_full =             true;    % Plot THz filtered E(z) at each z location
+plot_arr.fluence =              false;   % Calculate and plot fluence;
 plot_arr.SCG =                  false;   % Plot the supercontinuum.
 plot_arr.SCG_energy =           false;   % Calculate and plot Q greater and lesser.
 
@@ -51,7 +51,8 @@ clearvars fname json_str;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Path to SupData.m class
-addpath("/gpfs/fs1/home/aellio18/Desktop/SUPER/super/analysis")
+% MAY NEED TO REMOVE THIS FOR SUPER-JAX DATA.
+addpath("/global/u1/a/aellio/super/analysis")
 
 % Plotting defaults
 set(groot,'defaulttextinterpreter','latex');  

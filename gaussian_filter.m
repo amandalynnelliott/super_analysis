@@ -13,7 +13,7 @@ function [freq, filter] = gaussian_filter(f_range, f_center, bandwidth, n_points
     f_max = f_range(2);
     freq = linspace(f_min, f_max, n_points);
 
-    power = 10;
+    power = 40;
 
     filter = exp(-((freq - f_center).^power / (2 * bandwidth^power)));
 end
