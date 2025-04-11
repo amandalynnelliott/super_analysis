@@ -2,9 +2,7 @@
 %% Keys
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 outer_folder = "../super-jax/output/";
-% sim_title = "Tanner-f15_ff_ringing/";
-% sim_title = "Tanner-f85-01b_gaus_streak2/";
-sim_title = "Tanner-f10_ff_2color_extended/";
+sim_title = "Tanner-f15_ff_2color/";
 data_folder = outer_folder + sim_title;
 plots_folder = data_folder + "plots/";
 
@@ -67,14 +65,14 @@ clearvars ir;
 % Calculate the energy in the zmin slice, over all frequencies. 
 % Check that this energy is equal to the energy from the diagnostic,
 % ---- U(zmin), U.data(0)
-Uinit = U(1);
+Uinit = U.data(1);
 grid.THz = grid.omg / (2 * pi * 1e12);
 U_THz_max = 30; % Maximum THz frequency to integrate to.
 
-init_spectrum = streak(:,1);
-init_spectral_energy = trapz(init_spectrum,1) * grid.domg;
+init_spectrum = shifted_Spectrum(1,:);
+init_spectral_energy = trapz(init_spectrum,2) * grid.domg;
 energy_diff = abs(Uinit - init_spectral_energy);
-% disp(['Energy difference: ' + energy_diff])
+disp(['Energy difference: ' + energy_diff])
 
 if energy_diff > 1e-3
     warning('THz energy calculation is incorrect.')
@@ -88,22 +86,18 @@ clearvars Uinit init_spectrum init_spectral_energy energy_diff;
 % --- Plot THz energy vs z. 
 
 [~,i_zero] = min(abs(grid.THz));
-grid.THz_half = grid.THz(i_zero:end);
-[~,i_temp] = min(abs(grid.THz_half - U_THz_max));
+[~,i_temp] = min(abs(grid.THz - U_THz_max));
 
 spectral_energy_THz = ...
-    trapz(streak(1:i_temp,:),1) * grid.domg;
+    trapz(shifted_Spectrum(:, i_zero:i_temp),2) * grid.domg;
 
 figure;
 plot(grid.z,spectral_energy_THz);
-xlabel("z [m]"); title('Spectral Energy of THz')
-filename = plots_folder + "THz_spectral_energy.jpg";
+xlabel("$z$ [cm]"); title('Spectral Energy of THz')
+filename = plots_folder + sim_title + "_THz_spectral_energy.jpg";
 saveas(gcf,filename);
 clearvars filename spectral_energy_THz U_THz_max;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% THz Field and dJ/dt Plots
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Calculate final THz field.
 % -------------------------------------------------------------------------
@@ -129,13 +123,13 @@ Efinal_spectral_THz = full_filter' .* Efinal_spectral;
 Efinal_THz_t = const.S2R .* fft(fftshift(Efinal_spectral_THz,1),[],1);
 
 % Plot to make sure that first and second harmonics are there.
-% figure; imagesc(grid.omg, grid.r,abs(Efinal_spectral)'); axis xy; 
-% xlabel("$\omega$ [rad/s]"); ylabel("r [m]"); 
-% title("Final E Field - Spectral - Before Filter");
-% 
-% figure; imagesc(grid.THz, grid.r,abs(Efinal_spectral_THz)'); axis xy;
-% xlabel("f [THz]"); ylabel("r [m]");
-% title("Final E Field - Spectral - After Filter");
+figure; imagesc(grid.omg, grid.r,abs(Efinal_spectral)'); axis xy; 
+xlabel("$\omega$ [rad/s]"); ylabel("r [m]"); 
+title("Final E Field - Spectral - Before Filter");
+
+figure; imagesc(grid.THz, grid.r,abs(Efinal_spectral_THz)'); axis xy;
+xlabel("f [THz]"); ylabel("r [m]");
+title("Final E Field - Spectral - After Filter");
 
 max_THz = max(real(Efinal_THz_t), [], 'all');
 min_THz = min(real(Efinal_THz_t), [], 'all');
@@ -145,11 +139,11 @@ axis xy;
 c = redblueTecplot();
 colormap(c); 
 colorbar; 
-set(gca, 'CLim', [-max_THz, max_THz]);
+set(gca, 'CLim', [-0.25*max_THz, 0.25*max_THz]);
 a = colorbar;
 a.Label.String = "THz Field";
 xlabel("t [s]"); ylabel("r [m]"); title("Final THz Field")
-filename = plots_folder + "Efinal_THz.jpg";
+filename = plots_folder + "Efinal_THz_sat.jpg";
 saveas(gcf,filename);
 clearvars filename max_THz min_THz Efinal_spectral Efinal_spectral_THz Efinal_THz_t;
 
@@ -187,29 +181,8 @@ imagesc(grid.t, grid.z, real(dJ_dt)');
 axis xy; 
 c = redblueTecplot(); colormap(c); colorbar; 
 % set(gca, 'ColorScale', 'log');
-xlabel("t [s]"); ylabel("z [m]"); 
+xlabel("t [s]"); ylabel("z [cm]"); 
 title("dJ/dt on-axis")
 filename = plots_folder + "EOA_dJ_dt.jpg";
 saveas(gcf,filename);
 clearvars filename dJ_dt;
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Filter Spectrum to THz frequencies.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-filtered_Spectrum = full_filter(i_zero:end)' .* streak;
-
-figure; 
-imagesc(grid.THz_half(1:i_temp),grid.z,...
-    filtered_Spectrum(1:i_temp,:)'); 
-axis xy; 
-colorbar; 
-% set(gca, 'ColorScale','log'); 
-% set(gca, 'CLim', [orders*max_spectrum,max_spectrum]); % Orders of magnitude
-colormap(parula);
-xlabel("f [THz]"); 
-ylabel("z [m]"); title('THz Spectrum')
-filename = plots_folder + "Spectrum_THz.jpg";
-saveas(gcf,filename);
-% clearvars filename filtered_Spectrum;
