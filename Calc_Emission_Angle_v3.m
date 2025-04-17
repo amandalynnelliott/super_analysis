@@ -1,16 +1,24 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Keys
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-sim_title = "THz-f50-20-4b";
-outer_folder = "Jeremy/two_freq/";
-data_folder = outer_folder + sim_title + "/DATA/";
+% sim_title = "THz-f50-20-4b";
+% outer_folder = "Jeremy/two_freq/";
+% data_folder = outer_folder + sim_title + "/DATA/";
+% plots_folder = data_folder + "plots/";
+
+outer_folder = "../super-jax/output/";
+sim_title = "Tanner-f10_ff_2color_extended_fixedU/";
+% sim_title = "Tanner-f85-01b_gaus_streak2/";
+% sim_title = "Tanner-f10_ff_2color_phase/";
+data_folder = outer_folder + sim_title;
 plots_folder = data_folder + "plots/";
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Load plotting class and preferences
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Path to SupData.m class
-addpath("/gpfs/fs1/home/aellio18/Desktop/SUPER/super/analysis")
+% addpath("/gpfs/fs1/home/aellio18/Desktop/SUPER/super/analysis")
+addpath("/global/u1/a/aellio/super/analysis")
 
 % Plotting defaults
 set(groot,'defaulttextinterpreter','latex');  

@@ -71,7 +71,7 @@ xlabel("t [rs]"); ylabel("r [m]"); title("Efinal - Before")
 
 max_tran = max(real(Ef_interp), [], 'all');
 
-figure; imagesc(grid.THz, theta, real(Ef_interp)); axis xy;
+figure; imagesc(grid.THz, theta, real(Ef_interp)'); axis xy;
 c = redblueTecplot(); colormap(c); colorbar; set(gca, 'CLim', [-max_tran, max_tran]);
 xlabel("f [THz]"); ylabel("$\theta$ [rad]");  title("Final THz - After")
 
@@ -83,6 +83,12 @@ xlabel("f [THz]"); ylabel("$\theta$ [rad]");  title("Final THz - After")
 [i_omega, i_theta] = ind2sub(size(Ef_interp), max_idx);
 theta_C = theta(i_theta);
 
+
+% Testing
+% v_source = const.cl * 1.0; % source velocity in m/s
+% cos_theta_C = const.cl ./ (nindex * v_source);
+% cos_theta_C = min(max(cos_theta_C, -1), 1);  % avoid domain errors
+% theta_C = acos(cos_theta_C);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Functions

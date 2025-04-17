@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 outer_folder = "../../super-jax/output/";
 % outer_folder = "/pscratch/sd/a/aellio/WORKING/";
-sim_title = "Tanner-f15_ff_2-5_working/";
+sim_title = "Tanner-f10_ff_phase/";
 % sim_title = "Tanner-f85-01b_gaus_streak2/";
 % sim_title = "Tanner-f10_ff_2color_phase/";
 data_folder = outer_folder + sim_title;
