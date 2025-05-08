@@ -10,78 +10,57 @@ grid.rmax = max(grid.r); % Get maximum R
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Transformations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% -------------------------------------------------------------------------
-% Perform FFT for E(r,t,z) --> E(r,omg,z) 
+% ------------------------------------------------------------------------- 
 % Perform Hankel transform for E(r,omg,z) --> E(k_perp,omg,z)
 % -------------------------------------------------------------------------
 % Efinal = EF.r(:,:,end) + 1j * EF.i(:,:,end);
 Efinal = Efinal_THz_t;
 Ef_trans = grid.Nt * grid.dt * ifftshift(ifft(Efinal,[],2),2);
-Ef_trans = transpose(grid.T_R2K*Ef_trans');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Get index of refraction
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% EXTRAPOLATE FOR OTHER GAS ATOMS -- only Argon so far
-%Real refractive index at 1 atm and 273 K, 1.785e-4 gm/cm^3 (can be
-%scaled by mass density) from: https://refractiveindex.info/?shelf=main&book=He&page=Ermolov
-
-medium.atomsPmol = 1;
-
-% scale = json_arr.medium.atomdensity / const.ng0 / medium.atomsPmol;
-scale = 1;
-
-lamb = (2.0*pi*const.cl./grid.omg)/1e-6;
-
-dindex = scale*( 2.50141e-3./(91.012 - lamb.^(-2)) ...
-                + 5.00283e-4./(87.892 - lamb.^(-2)) ...
-                + 5.22343e-2./(214.02 - lamb.^(-2)) ); 
-
-nindex = 1 + dindex;
+Ef_trans = transpose(grid.T_R2K*Efinal');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Calculate angle of emmission
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[~, i_zero] = min(abs(grid.omg));
+grid.omgpos = grid.omg(i_zero:end);
 
-omg_dispersion = grid.omg .* nindex;
+[kperp_grid, omg_grid] = meshgrid(grid.kperp, grid.omgpos);
+theta_grid = real(asin(const.cl * kperp_grid ./ omg_grid));
+max_theta = max(theta_grid, [], 'all');
 
-[kperp_grid, omg_grid] = meshgrid(grid.kperp, grid.omg);
-theta_grid = asin(const.cl * kperp_grid ./ omg_grid);
+theta_g = linspace(0,max_theta,grid.Nr);
+% theta_g = linspace(-0.12,0.12,grid.Nr);
 
-
-% Test angle plot ---------------------------------------------------------
+% Test function
 Etest = exp(-(theta_grid - 0.05).^2/(.02)^2);
 
-theta = linspace(0,.1,grid.Nr);
-[theta_A,omg_A] = meshgrid(theta,grid.omg);
-kperp_A = omg_A/const.cl.*sin(theta_A);
+if brute
+    Calc_Emission_Angle_BRUTE;
+else
+    Calc_Emission_Angle_INTERP;
+end
 
-Etest_interp = interp2(kperp_grid,omg_grid,Etest,kperp_A,omg_A,'linear',0);
-Ef_interp = interp2(kperp_grid,omg_grid,Ef_trans,kperp_A,omg_A,'linear',0);
 
-figure; imagesc(grid.omg, grid.kperp, real(Etest)'); axis xy;
-xlabel("omega [rad/s]"); ylabel("k [1/m]"); title("Test Field - Before")
-figure; imagesc(grid.omg, theta, real(Etest_interp)'); axis xy;
-xlabel("omega [rad/s]");  ylabel("Angle [rad]"); title("Test Field - After")
+
 
 % Ef angle plot -----------------------------------------------------------
-figure; imagesc(grid.t, grid.r, real(Efinal)'); axis xy;
-c = redblueTecplot(); colormap(c); colorbar; set(gca, 'CLim', [-max_THz, max_THz]);
-xlabel("t [rs]"); ylabel("r [m]"); title("Efinal - Before")
+% figure; imagesc(grid.t, grid.r, real(Efinal)'); axis xy;
+% c = redblueTecplot(); colormap(c); colorbar; set(gca, 'CLim', [-max_THz, max_THz]);
+% xlabel("t [rs]"); ylabel("r [m]"); title("Efinal - Before")
 
-max_tran = max(real(Ef_interp), [], 'all');
-
-figure; imagesc(grid.THz, theta, real(Ef_interp)'); axis xy;
-c = redblueTecplot(); colormap(c); colorbar; set(gca, 'CLim', [-max_tran, max_tran]);
-xlabel("f [THz]"); ylabel("$\theta$ [rad]");  title("Final THz - After")
+% Account for dispersion?
+% Keeps getting error for interp2 "Sample points must be sorted in
+% ascending order."
+% [kperp_grid, omg_grid] = meshgrid(grid.kperp, omg_dispersion);
+% theta_grid = asin(const.cl * kperp_grid ./ (omg_grid .* nindex'));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Calculate Cherenkov Angle
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[max_val, max_idx] = max(real(Ef_interp(:)));
-[i_omega, i_theta] = ind2sub(size(Ef_interp), max_idx);
-theta_C = theta(i_theta);
+[max_val, max_idx] = max(real(Eg(:)));
+[i_omega, i_theta] = ind2sub(size(Eg), max_idx);
+theta_C = theta_g(i_theta);
 
 
 % Testing

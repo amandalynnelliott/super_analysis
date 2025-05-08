@@ -2,12 +2,16 @@
 %% Keys
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 outer_folder = "../../super-jax/output/";
-% outer_folder = "/pscratch/sd/a/aellio/WORKING/";
-sim_title = "Tanner-f10_ff_phase/";
+outer_folder = "/pscratch/sd/a/aellio/WORKING/";
+% sim_title = "Jeremy-f33_STP_sol_filt_Nt/";
 % sim_title = "Tanner-f85-01b_gaus_streak2/";
-% sim_title = "Tanner-f10_ff_2color_phase/";
+sim_title = "Tanner-f10_ff_v10025c/";
 data_folder = outer_folder + sim_title;
 plots_folder = data_folder + "plots/";
+
+saveplots = false;
+brute = true;   % true: perform brute-force calc on emission angle; 
+                % false: use interpolation
 
 if ~exist(plots_folder, 'dir')
     mkdir(plots_folder)

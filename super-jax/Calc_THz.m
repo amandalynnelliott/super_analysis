@@ -35,9 +35,43 @@ spectral_energy_THz = ...
 figure;
 plot(grid.z,spectral_energy_THz);
 xlabel("z [m]"); title('Spectral Energy of THz')
-filename = plots_folder + "THz_spectral_energy.jpg";
-saveas(gcf,filename);
+if saveplots
+    filename = plots_folder + "THz_spectral_energy.jpg";
+    saveas(gcf,filename);
+end
 clearvars filename spectral_energy_THz U_THz_max;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Medium effects: Get index of refraction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EXTRAPOLATE FOR OTHER GAS ATOMS -- only Argon so far
+%Real refractive index at 1 atm and 273 K, 1.785e-4 gm/cm^3 (can be
+%scaled by mass density) from: https://refractiveindex.info/?shelf=main&book=He&page=Ermolov
+
+medium.atomsPmol = 1;
+
+% scale = json_arr.medium.atomdensity / const.ng0 / medium.atomsPmol;
+scale = 1;
+
+lamb = (2.0*pi*const.cl./grid.omg)/1e-6;
+
+dindex = scale*( 2.50141e-3./(91.012 - lamb.^(-2)) ...
+                + 5.00283e-4./(87.892 - lamb.^(-2)) ...
+                + 5.22343e-2./(214.02 - lamb.^(-2)) ); 
+
+nindex = 1 + dindex;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  Calculate group velocity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% vg = const.cl ./ (gradient(nindex .* grid.omg, grid.omg));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Calculate phase term for FFT, \xi = t - z/vg
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% phase_xi = 1j * grid.omg * grid.z(end) / vg;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% THz Field and dJ/dt Plots
@@ -54,17 +88,49 @@ freq_max = 30;
 freq_min = 0;
 % freq_min = grid.domg / THz; % Make min freq one grid.omg from zero.
 
-filter_gaussian = '1'; % 1: Hard, 2: Gaussian
-filter_half = true;    % Half only cuts off at zero. False is true Gaussian.
+filter_gaussian = '2'; % 1: Hard, 2: Gaussian
+filter_half = false;    % Half only cuts off at zero. False is true Gaussian.
 
 full_filter = Calc_THz_filter(filter_gaussian, filter_half, freq_min, freq_max, grid.THz);
 clearvars freq_max freq_min filter_gaussian filter_half;
 
+% ORIGINAL ----------------------------------------------------------------
 % Efinal -> ffEfinal_spectral = fft(Efinal.data)
 Efinal = EF.r(:,:,end) + 1j * EF.i(:,:,end);
-Efinal_spectral = const.R2S .* ifftshift(ifft(Efinal,[],1),1);
+Efinal_spectral = ifftshift(ifft(Efinal,[],1),1);
 Efinal_spectral_THz = full_filter' .* Efinal_spectral;
-Efinal_THz_t = const.S2R .* fft(fftshift(Efinal_spectral_THz,1),[],1);
+Efinal_THz_t = fft(fftshift(Efinal_spectral_THz,1),[],1);
+% -------------------------------------------------------------------------
+
+% % Loop over z, apply per-slice phase shift
+% E_THz_t = zeros(size(EF.r));  % [Nt x Nr x Nz]
+% E_THz_spectral = zeros(size(EF.r));
+% 
+% for iz = 1:length(grid.z_skip)
+%     E_z = EF.r(:,:,iz) + 1j * EF.i(:,:,iz);  % [Nt x Nr]
+% 
+%     % Phase shift per omega
+%     % phase = exp(1j * grid.omg * grid.z(iz) / vg); % [Nt x 1]
+% 
+%     % Transform to freq domain
+%     E_freq = ifftshift(ifft(E_z, [], 1), 1);  % FFT along time
+% 
+%     % Apply shift
+%     % E_freq_shifted = E_freq .* phase;
+% 
+%     % Apply filter
+%     E_freq_filtered = E_freq .* full_filter';
+%     E_THz_spectral(:,:,iz) = E_freq_filtered; 
+% 
+%     % Back to time domain
+%     E_time = fftshift(E_freq_filtered, 1);
+%     % E_time = fft(E_time .* conj(phase), [], 1);
+%     E_time = fft(E_time, [], 1);
+% 
+% 
+%     E_THz_t(:,:,iz) = E_time;
+% end
+
 
 % Plot to make sure that first and second harmonics are there.
 % figure; imagesc(grid.omg, grid.r,abs(Efinal_spectral)'); axis xy; 
@@ -87,8 +153,10 @@ set(gca, 'CLim', [-max_THz, max_THz]);
 a = colorbar;
 a.Label.String = "THz Field";
 xlabel("t [s]"); ylabel("r [m]"); title("Final THz Field")
-filename = plots_folder + "Efinal_THz.jpg";
-saveas(gcf,filename);
+if saveplots
+    filename = plots_folder + "Efinal_THz.jpg";
+    saveas(gcf,filename);
+end
 clearvars filename min_THz Efinal_spectral Efinal_spectral_THz;
 
 
